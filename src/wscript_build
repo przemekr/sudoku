@@ -1,0 +1,24 @@
+from waflib.Tools import waf_unit_test
+
+bld.stlib(
+      source   = bld.path.ant_glob('agg-2.5/src/agg_*.cpp') 
+               + bld.path.ant_glob('agg-2.5/src/ctrl/*.cpp'),
+      target   = 'agg',
+      includes = '. .. agg-2.5/include'
+      )
+bld.program(
+      source   = ['agg_app.cc', 'agg_button_ctrl.cpp']
+                  + bld.env.PLATFORM_SRC,
+      includes = '. .. agg-2.5/include',
+      cxxflags = ['-O0', '-ggdb'],
+      lib      = ['SDL2_image', 'SDL2_mixer'],
+      target   = 'agg_timer',
+      use      = ['agg'],
+      uselib   = ['platform'],
+      )
+
+#bld.program(features='test',
+#      source='solver_test.cc',
+#      lib   = ['pthread', 'gtest', 'gtest_main'],
+#      cxxflags = ['-O0', '-ggdb'],
+#      target='solver_test')
