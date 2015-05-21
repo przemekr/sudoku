@@ -1,20 +1,20 @@
 #!/usr/bin/env python
 #encoding: utf-8
 VERSION='0.0.1'
-APPNAME='agg_timer'
+APPNAME='empty_agg'
 
 top = '.'
 
 from waflib import Configure, Logs
 
 def options(opt):
-	opt.load('compiler_cxx')
+        opt.load('compiler_cxx')
         opt.add_option('--double_click', action='store',
               default='0',
               dest='double_click')
         opt.add_option('--platform',
               action='store',
-              default='sdl',
+              default='sdl2',
               help='Graphical output to use. [sdl, sdl2, x11, w32]',
               dest='platform')
 
@@ -43,7 +43,7 @@ def configure(conf):
         elif conf.options.platform == 'win':
            conf.env.PLATFORM_SRC = ['agg-2.5/src/platform/win32/agg_platform_support.cpp']
            # not sure if any more libs needed for win32 TODO: test!
-           
+
         elif conf.options.platform == 'mac':
            conf.env.PLATFORM_SRC = ['agg-2.5/src/platform/mac/agg_platform_support.cpp']
            # not sure if any more libs needed for mac TODO: test!
@@ -51,4 +51,4 @@ def configure(conf):
            conf.fatal('platform not supported: '+ conf.options.platform)
 
 def build(bld):
-	bld.recurse('src')
+        bld.recurse('src')

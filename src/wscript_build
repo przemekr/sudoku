@@ -12,13 +12,13 @@ bld.program(
       includes = '. .. agg-2.5/include',
       cxxflags = ['-O0', '-ggdb'],
       lib      = ['SDL2_image', 'SDL2_mixer'],
-      target   = 'agg_timer',
+      target   = 'empty_agg',
       use      = ['agg'],
       uselib   = ['platform'],
       )
 
 #bld.program(features='test',
-#      source='solver_test.cc',
+#      source='_test.cc',
 #      lib   = ['pthread', 'gtest', 'gtest_main'],
 #      cxxflags = ['-O0', '-ggdb'],
 #      target='solver_test')
