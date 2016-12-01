@@ -23,6 +23,7 @@
 #include <algorithm> 
 #include <stack>
 #include <unistd.h>
+#include <stdarg.h>
 #include "agg_basics.h"
 #include "agg_rendering_buffer.h"
 #include "agg_rasterizer_scanline_aa.h"
@@ -59,8 +60,8 @@
 #define START_W  640
 #define WINDOW_FLAGS agg::window_fullscreen | agg::window_keep_aspect_ratio
 #else
-#define START_H  400
-#define START_W  640
+#define START_H  680
+#define START_W  600
 #define WINDOW_FLAGS agg::window_resize | agg::window_hw_buffer
 #endif
 
@@ -68,10 +69,11 @@
 
 enum flip_y_e { flip_y = true };
 const agg::rgba transp(0, 0, 0, 0);
+const agg::rgba white(1.0, 1.0, 1.0, 1.0);
 const agg::rgba dblue(0,0,200,128);
 const agg::rgba lblue(0,0,0.9,1);
 const agg::rgba lgreen(0,0.9,0,1);
-const agg::rgba lgray(60,60,60);
+const agg::rgba lgray(0.8,0.8,0.8,1);
 const agg::rgba green(0,120,0);
 const agg::rgba yellow(63,63,0);
 const agg::rgba red(0.9,0,0,0.7);
@@ -114,6 +116,7 @@ public:
    {
       sound = false;
       music = false;
+      in_background = false;
    }
 
    bool sound_on() { return sound; }
@@ -130,8 +133,16 @@ public:
       draw_text(x, y, size, c, 1.0, str);
    }
 
-   void draw_text(double x, double y, double size, agg::rgba& c, double tickness, const char* str)
+
+   void draw_text(double x, double y, double size, agg::rgba& c, double tickness,
+         const char* fmt, ...)
    {
+      va_list ap;
+      va_start(ap, fmt);
+      char str[1024];
+      vsnprintf(str, sizeof(str), fmt, ap);
+      va_end(ap);
+
       agg::rasterizer_scanline_aa<> m_ras;
       agg::scanline_p8              m_sl;
       pixfmt_type pf(rbuf_window());
@@ -149,6 +160,84 @@ public:
       ren.color(c);
       agg::render_scanlines(m_ras, m_sl, ren);
    }
+
+   void rotate_img(unsigned idx, double ang)
+   {
+      agg::rendering_buffer rbuf;
+      agg::scanline_u8 sl;
+      agg::rasterizer_scanline_aa<> ras;
+      double w = rbuf_img(idx).width();
+      double h = rbuf_img(idx).height();
+
+      agg::trans_affine shape_mtx;
+      shape_mtx.reset();
+      shape_mtx *= agg::trans_affine_translation(-1*w/2, -1*h/2);
+      shape_mtx *= agg::trans_affine_rotation(ang);
+      shape_mtx *= agg::trans_affine_translation(h/2, w/2);
+      shape_mtx.invert();
+
+      unsigned char* pixels = (unsigned char*)malloc(w*h*4);
+      rbuf.attach(pixels, h, w, -h*4);
+      pixfmt_type pfb(rbuf);
+      agg::renderer_base<pixfmt_type> img(pfb);
+
+      typedef agg::span_interpolator_linear<agg::trans_affine> interpolator_type;
+      interpolator_type interpolator(shape_mtx);
+      typedef agg::image_accessor_clone<pixfmt_type> img_accessor_type;
+      pixfmt_type pixf_img(rbuf_img(idx));
+      img_accessor_type ia(pixf_img);
+      typedef agg::span_image_filter_rgba_nn<img_accessor_type, interpolator_type> span_gen_type;
+      span_gen_type sg(ia, interpolator);
+      agg::span_allocator<color_type> sa;
+      ras.move_to_d(0,0);
+      ras.line_to_d(h,0);
+      ras.line_to_d(h,w);
+      ras.line_to_d(0,w);
+
+      agg::render_scanlines_aa(ras, sl, img, sa, sg);
+      rbuf_img(idx).attach(pixels, h, w, -h*4);
+      load_img(idx, "");
+   }
+
+   void scale_img(unsigned idx,
+         unsigned xsize, unsigned ysize,
+         unsigned xoff = 0,  unsigned yoff = 0)
+   {
+      agg::rendering_buffer rbuf;
+      agg::scanline_u8 sl;
+      agg::rasterizer_scanline_aa<> ras;
+      double w = rbuf_img(idx).width();
+      double h = rbuf_img(idx).height();
+      double nw = xsize;
+      double nh = ysize;
+
+      agg::trans_affine shape_mtx;
+      shape_mtx.reset();
+      shape_mtx *= agg::trans_affine_scaling(w/nw, h/nh);
+
+      unsigned char* pixels = (unsigned char*)malloc(xsize*ysize*4);
+      DEBUG_PRINT("malloc: %d\n", xsize*ysize*4);
+      rbuf.attach(pixels, xsize, ysize, -xsize*4);
+      pixfmt_type pfb(rbuf);
+      agg::renderer_base<pixfmt_type> img(pfb);
+
+      typedef agg::span_interpolator_linear<agg::trans_affine> interpolator_type;
+      interpolator_type interpolator(shape_mtx);
+      typedef agg::image_accessor_clone<pixfmt_type> img_accessor_type;
+      pixfmt_type pixf_img(rbuf_img(idx));
+      img_accessor_type ia(pixf_img);
+      typedef agg::span_image_filter_rgba_nn<img_accessor_type, interpolator_type> span_gen_type;
+      span_gen_type sg(ia, interpolator);
+      agg::span_allocator<color_type> sa;
+      ras.move_to_d(0,0);
+      ras.line_to_d(xsize,0);
+      ras.line_to_d(xsize,ysize);
+      ras.line_to_d(0,ysize);
+
+      agg::render_scanlines_aa(ras, sl, img, sa, sg);
+      rbuf_img(idx).attach(pixels, xsize, ysize, -xsize*4);
+   }
+
 
    virtual void on_ctrl_change()
    {
@@ -193,13 +282,26 @@ public:
 
    virtual void on_draw()
    {
+      if (!in_background)
       view->on_draw();
    }
+
+   void enter_background()
+   {
+      in_background = true;
+   }
+
+   void enter_foreground()
+   {
+      in_background = false;
+   }
+   int  current_sound;
 
 protected:
    View* view;
    bool sound;
    bool music;
+   bool in_background;
 };
 
 
@@ -215,8 +317,8 @@ public:
       {
          usleep(1000*(1000/max_fps()-loop_time));
       }
-      app.start_timer();
       update(app.elapsed_time());
+      app.start_timer();
       app.force_redraw();
    }
 protected:

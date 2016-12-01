@@ -27,8 +27,6 @@
 #include "platform/agg_platform_support.h"
 #include "SDL.h"
 #include "SDL_byteorder.h"
-#include "SDL_image.h"
-#include "SDL_mixer.h"
 
 
 namespace agg
@@ -680,72 +678,22 @@ if(m_ctrls.on_mouse_button_down(m_specific->m_cur_x,
     //------------------------------------------------------------------------
     bool platform_support::load_music(unsigned idx, const char* file)
     {
-       printf("loadmusic %d, %s\n", idx, file);
-       if (idx >= max_images)
-       {
-          return false;
-       }
-       if (m_specific->m_music[idx])
-       {
-          Mix_FreeMusic(m_specific->m_music[idx]);
-       }
-       printf("calling load mus\n");
-       m_specific->m_music[idx] = Mix_LoadMUS(file);
-       printf("load mus returns\n");
-       if (m_specific->m_music[idx] == NULL)
-       {
-          printf("load mus returns null\n");
-          SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-                "Failed to load music! SDL_mixer Error: %s\n", Mix_GetError());
-          return false;
-       }
        return true;
     }
 
     //------------------------------------------------------------------------
     bool platform_support::load_sound(unsigned idx, const char* file)
     {
-       if (idx >= max_images)
-       {
-          return false;
-       }
-       if (m_specific->m_sounds[idx])
-       {
-          Mix_FreeChunk(m_specific->m_sounds[idx]);
-       }
-       m_specific->m_sounds[idx] = Mix_LoadWAV(file);
-       if (m_specific->m_sounds[idx] == NULL)
-       {
-          SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
-                "Failed to load sound! SDL_mixer Error: %s\n", Mix_GetError());
-          return false;
-       }
        return true;
     }
 
-    void platform_support::play_sound(unsigned idx)
+    void platform_support::play_sound(unsigned idx, unsigned vol)
     {
-       if (idx >= max_images || !m_specific->m_sounds[idx])
-       {
           return;
-       }
-       Mix_PlayChannel( -1, m_specific->m_sounds[idx], 0 );
     }
-    void platform_support::play_music(unsigned idx)
+    void platform_support::play_music(unsigned idx, unsigned vol)
     {
-       printf("play music\n");
-       if (idx >= max_images || !m_specific->m_music[idx])
-       {
           return;
-       }
-       printf("play music\n");
-       if (Mix_PlayingMusic())
-       {
-          Mix_HaltMusic();
-       } 
-       printf("play music\n");
-       Mix_PlayMusic(m_specific->m_music[idx], -1);
-       printf("play music\n");
     }
     
     //------------------------------------------------------------------------

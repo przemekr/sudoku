@@ -29,7 +29,7 @@
 #include <time.h>
 
 #include "app_support.h"
-#include "timer_view.h"
+#include "game_view.h"
 #include "menu_view.h"
 
 
@@ -37,60 +37,40 @@ class the_application: public App
 {
 public:
    the_application(agg::pix_format_e format, bool flip_y) :
-      App(format, flip_y)
+      App(format, !flip_y)
    {
-      timer = new TimerView(*this);
+      game = new GameView(*this);
       menu  = new MenuView(*this);
-      view = timer;
+      view = game;
    }
    virtual void changeView(const char* name) 
    {
       if (strcmp(name, "menu") == 0)
          view = menu;
-      if (strcmp(name, "timer") == 0)
-         view = timer;
+      if (strcmp(name, "game") == 0)
+         view = game;
       view->enter();
    };
 private:
-   TimerView* timer;
+   GameView* game;
    MenuView* menu;
 };
 
 
 int agg_main(int argc, char* argv[])
 {
-    the_application app(agg::pix_format_bgra32, flip_y);
-    app.caption("AGG Timer");
+    the_application app(agg::pix_format_bgra32, !flip_y);
+    app.caption("Sudoku Kuai");
 
-    if (false
-      // || !app.load_img(0, "1.png")
-      // || !app.load_img(1, "2.png")
-      // || !app.load_img(2, "3.png")
-      // || !app.load_img(3, "4.png")
-      // || !app.load_img(4, "5.png")
-      // || !app.load_img(5, "6.png")
-      // || !app.load_img(6, "7.png")
-      // || !app.load_img(7, "8.png")
-      // || !app.load_img(8, "9.png")
-      // || !app.load_img(9, "you_are_a_star.png") 
-      // || !app.load_img(10, "you_are_the_best.png")
-      // || !app.load_img(11, "background.png")
-      // || !app.load_sound(0, "24finish.ogg")
-      // || !app.load_sound(1, "applouse.ogg")
-      // || !app.load_sound(2, "applouse2.ogg")
-      // || !app.load_sound(3, "clicked.ogg"))
-       )
-    {
-        char buf[256];
-        sprintf(buf, "There must be files 1%s...9%s\n",
-                     app.img_ext(), app.img_ext());
-        app.message(buf);
-        return 1;
-    }
+    //if (false || !app.load_img(0, "sudoku2.png"))
+    //{
+    //    return 1;
+    //}
 
     if (app.init(START_W, START_H, WINDOW_FLAGS))
     {
        try {
+          app.changeView("game");
           return app.run();
        } catch (...) {
           return 0;

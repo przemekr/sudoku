@@ -1,8 +1,8 @@
 ************************************************************
-              AGG Timer app.
+              AGG Sudoku Kuai app.
 ************************************************************
 
-AGG Timer app is a simple demo of AGG library usage for a mobile device
+AGG Sudoku Kuai app is a simple demo of AGG library usage for a mobile device
 platform.
 
 
@@ -37,7 +37,7 @@ If You have access to project repository feel free to push all changes. Else
 please contact authors.
 
 Project is currently hosted at BitBucket. Please visit:
-https://bitbucket.org/przemekr/agg_timer
+https://bitbucket.org/przemekr/agg_Sudoku Kuai
 for the latest updates.
 
 
@@ -45,17 +45,17 @@ for the latest updates.
 ************************************************************
 LICENSE
 
-agg timer is free software: you can redistribute it and/or modify it under
+agg Sudoku Kuai is free software: you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
 Foundation, either version 3 of the License, or (at your option) any later
 version.
 
-agg timer is distributed in the hope that it will be useful, but WITHOUT
+agg Sudoku Kuai is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with
-agg timer.  If not, see <http://www.gnu.org/licenses/>.
+agg Sudoku Kuai.  If not, see <http://www.gnu.org/licenses/>.
 Installation Instructions
 *************************
 

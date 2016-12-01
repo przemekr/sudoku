@@ -6,19 +6,27 @@ bld.stlib(
       target   = 'agg',
       includes = '. .. agg-2.5/include'
       )
+
 bld.program(
       source   = ['agg_app.cc', 'agg_button_ctrl.cpp']
                   + bld.env.PLATFORM_SRC,
       includes = '. .. agg-2.5/include',
       cxxflags = ['-O0', '-ggdb'],
-      lib      = ['SDL2_image', 'SDL2_mixer'],
-      target   = 'empty_agg',
-      use      = ['agg'],
-      uselib   = ['platform'],
+      #lib      = ['SDL2_image', 'SDL2_mixer'],
+      target   = 'sudoku_kuai',
+      use      = ['agg', 'ocrad'],
+      uselib   = ['platform', 'ocrad'],
       )
 
-#bld.program(features='test',
-#      source='_test.cc',
-#      lib   = ['pthread', 'gtest', 'gtest_main'],
-#      cxxflags = ['-O0', '-ggdb'],
-#      target='solver_test')
+bld.program(features='test',
+     source='test_ocrad.cc',
+     lib   = ['gtest', 'gtest_main', 'pthread'],
+     use   = ['ocrad'],
+     cxxflags = ['-O0', '-ggdb'],
+     target='ocrad_test')
+
+bld.program(features='test',
+     source='sudoku_test.cc',
+     lib   = ['gtest', 'gtest_main', 'pthread'],
+     cxxflags = ['-O0', '-ggdb'],
+     target='sudoku_test')
