@@ -18,11 +18,11 @@ def options(opt):
 def configure(conf):
         conf.load('compiler_cxx')
         conf.check_cfg(
-             path='sdl-config',
+             path='sdl2-config',
              args='--cflags --libs', package = '',
              uselib_store='platform')
-        conf.check_cc(header='ocradlib', lib='ocrad', uselib_store='ocrad')
-        conf.env.PLATFORM_SRC = ['agg-2.5/src/platform/sdl/agg_platform_support.cpp']
+        #conf.check_cc(header='ocradlib', lib='ocrad', uselib_store='ocrad')
+        conf.env.PLATFORM_SRC = ['agg-2.5/src/platform/sdl2/agg_platform_support.cpp']
         conf.env.append_value('CXXFLAGS', '-std=c++11')
 
 def build(bld):

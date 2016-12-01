@@ -12,16 +12,19 @@ public:
    menu(20,  20, 100, 45,   "New",  !flip_y),
    scan(120, 20, 200, 45,   "Scan", !flip_y),
    hint(220, 20, 300, 45,   "Hint", !flip_y),
-   undo(320, 20, 400, 45,   "Undo", !flip_y)
+   undo(320, 20, 400, 45,   "Undo", !flip_y),
+   solveB(420, 20, 500, 45,   "Solve", !flip_y)
    {
       menu.background_color(yellow);
       scan.background_color(yellow);
       hint.background_color(yellow);
       undo.background_color(yellow);
+      solveB.background_color(yellow);
       add_ctrl(menu);
       add_ctrl(scan);
       add_ctrl(hint);
       add_ctrl(undo);
+      add_ctrl(solveB);
    }
 
    void enter()
@@ -134,6 +137,15 @@ public:
       }
    }
 
+   void on_key(int x, int y, unsigned key, unsigned flags)
+   {
+      if (key == 27 || key == 0x4000010e /* Android BACK key*/)
+      {
+         undo.status(true);
+         on_ctrl_change();
+      }
+   }
+
    void on_ctrl_change()
    {
       if (menu.status())
@@ -148,6 +160,7 @@ public:
       }
       if (hint.status())
       {
+         hint.status(false);
          if (errors.size() or not sudoku.valid())
          {
             return;
@@ -162,6 +175,28 @@ public:
             std::cout << "No Solution!" << std::endl;
          } catch (const MoveLimit& e)
          {
+            std::cout << "No Solution (Move Limit)!" << std::endl;
+         }
+      }
+      if (solveB.status())
+      {
+         if (errors.size() or not sudoku.valid())
+         {
+            solveB.status(false);
+            return;
+         }
+         steps.clear();
+         try {
+            unsigned int limit = 5000;
+            solve(sudoku, steps, limit);
+            stepIdx = 0;
+         } catch (const NoSolution& e)
+         {
+            solveB.status(false);
+            std::cout << "No Solution!" << std::endl;
+         } catch (const MoveLimit& e)
+         {
+            solveB.status(false);
             std::cout << "No Solution (Move Limit)!" << std::endl;
          }
       }
@@ -208,6 +243,7 @@ public:
       agg::render_ctrl(ras, sl, rbase, scan);
       agg::render_ctrl(ras, sl, rbase, hint);
       agg::render_ctrl(ras, sl, rbase, undo);
+      agg::render_ctrl(ras, sl, rbase, solveB);
 
    }
 
@@ -288,18 +324,21 @@ private:
          (*it)->update(1.0*elapsed_time/1000);
       }
 
-      if (cnt++ < 255/4)
+      if (solveB.status() and stepIdx < steps.size())
       {
-         //bgc = cnt*4;
+         move(steps[stepIdx].x, steps[stepIdx].y, steps[stepIdx].value);
+         stepIdx++;
       }
-      else if (cnt %6 == 0 and stepIdx < steps.size())
+      if (solveB.status() and stepIdx == steps.size())
       {
+         solveB.status(false);
       }
    }
    agg::button_ctrl<agg::rgba8> menu;
    agg::button_ctrl<agg::rgba8> scan;
    agg::button_ctrl<agg::rgba8> hint;
    agg::button_ctrl<agg::rgba8> undo;
+   agg::button_ctrl<agg::rgba8> solveB;
    Sudoku sudoku;
    ImageRecognizer* imgRec;
    std::vector<Move> steps;

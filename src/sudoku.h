@@ -36,7 +36,7 @@ public:
    Sudoku (Digits rowdata)
    {
       dim = (int)sqrt((double)rowdata.size());
-      subsize = (int)sqrt(dim);
+      subsize = (int)sqrt((double)dim);
       for (int i = 0; i < dim; i++)
       {
          Digits row(i*dim+rowdata.begin(), (i+1)*dim+rowdata.begin());
@@ -229,8 +229,7 @@ Sudoku generate(int dim)
             s.move(Move(poss[rand()%poss.size()], i, 0));
          }
          unsigned limit = 1000;
-         std::cout << "ggg\n" << s.str() << std::endl;
-         Sudoku solved = solve(s, steps, limit); std::cout << "sss\n" << solved.str() << std::endl;
+         Sudoku solved = solve(s, steps, limit);
          for (int i = 1; i <= 0.7*dim*dim; i++)
             solved.move(Move(0, rand()%dim, rand()%dim));
          return solved;

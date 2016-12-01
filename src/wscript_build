@@ -4,7 +4,16 @@ bld.stlib(
       source   = bld.path.ant_glob('agg-2.5/src/agg_*.cpp') 
                + bld.path.ant_glob('agg-2.5/src/ctrl/*.cpp'),
       target   = 'agg',
+      name     = 'agg',
       includes = '. .. agg-2.5/include'
+      )
+
+bld.stlib(
+      source   = bld.path.ant_glob('ocrad-0.23/*.cc', exclude='*main.cc'),
+      target   = 'ocrad',
+      name     = 'ocrad',
+      defines  = 'PROGVERSION="0.23"',
+      includes = 'ocrad-0.23'
       )
 
 bld.program(
@@ -12,10 +21,10 @@ bld.program(
                   + bld.env.PLATFORM_SRC,
       includes = '. .. agg-2.5/include',
       cxxflags = ['-O0', '-ggdb'],
-      #lib      = ['SDL2_image', 'SDL2_mixer'],
+      lib      = ['SDL2_image', 'SDL2_mixer'],
       target   = 'sudoku_kuai',
       use      = ['agg', 'ocrad'],
-      uselib   = ['platform', 'ocrad'],
+      uselib   = ['platform'],
       )
 
 bld.program(features='test',

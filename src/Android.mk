@@ -6,9 +6,37 @@ LOCAL_MODULE := main
 
 SDL_PATH := ../SDL
 
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/$(SDL_PATH)/include $(LOCAL_PATH)/agg-2.5/include 
-LOCAL_CPPFLAGS += -DMOBILE -DDEBUG
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/$(SDL_PATH)/include $(LOCAL_PATH)/agg-2.5/include $(LOCAL_PATH)/ocrad-0.23
+LOCAL_CPPFLAGS += -DMOBILE -DDEBUG -DPROGVERSION="\"0.23\""
 LOCAL_CXXFLAGS += -fexceptions
+
+OCRAD_FILES := \
+   ocrad-0.23/arg_parser.cc \
+   ocrad-0.23/bitmap.cc \
+   ocrad-0.23/blob.cc \
+   ocrad-0.23/character.cc \
+   ocrad-0.23/character_r11.cc \
+   ocrad-0.23/character_r12.cc \
+   ocrad-0.23/character_r13.cc \
+   ocrad-0.23/common.cc \
+   ocrad-0.23/feats.cc \
+   ocrad-0.23/feats_test0.cc \
+   ocrad-0.23/feats_test1.cc \
+   ocrad-0.23/mask.cc \
+   ocrad-0.23/ocradlib.cc \
+   ocrad-0.23/ocrcheck.cc \
+   ocrad-0.23/page_image.cc \
+   ocrad-0.23/page_image_io.cc \
+   ocrad-0.23/profile.cc \
+   ocrad-0.23/rational.cc \
+   ocrad-0.23/rectangle.cc \
+   ocrad-0.23/segment.cc \
+   ocrad-0.23/textblock.cc \
+   ocrad-0.23/textline.cc \
+   ocrad-0.23/textline_r2.cc \
+   ocrad-0.23/textpage.cc \
+   ocrad-0.23/track.cc \
+   ocrad-0.23/ucs.cc
 
 # Add your application source files here...
 LOCAL_SRC_FILES := $(SDL_PATH)/src/main/android/SDL_android_main.c \
@@ -47,7 +75,8 @@ LOCAL_SRC_FILES := $(SDL_PATH)/src/main/android/SDL_android_main.c \
 	agg-2.5/src/ctrl/agg_slider_ctrl.cpp \
 	agg-2.5/src/ctrl/agg_spline_ctrl.cpp \
 	agg-2.5/src/platform/sdl2/agg_platform_support.cpp \
-	agg_app.cc agg_button_ctrl.cpp
+	agg_app.cc agg_button_ctrl.cpp \
+	$(OCRAD_FILES)
 
 LOCAL_SHARED_LIBRARIES := SDL2 SDL2_image SDL2_mixer
 

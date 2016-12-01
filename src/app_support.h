@@ -56,8 +56,8 @@
 #include <time.h>
 
 #ifdef MOBILE
-#define START_H  400
-#define START_W  640
+#define START_H  800
+#define START_W  500
 #define WINDOW_FLAGS agg::window_fullscreen | agg::window_keep_aspect_ratio
 #else
 #define START_H  680
