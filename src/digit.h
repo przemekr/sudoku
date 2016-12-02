@@ -21,7 +21,7 @@ public:
 
    void draw(agg::renderer_base<pixfmt_type> rbase)
    {
-      double tickness = 2.0;
+      double tickness = 1.4;
       agg::rgba color(c, cover);
       agg::renderer_scanline_aa_solid<agg::renderer_base<pixfmt_type> > ren(rbase);
       agg::gsv_text txt;

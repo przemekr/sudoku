@@ -214,7 +214,7 @@ Sudoku solve(Sudoku s, std::vector<Move>& steps, unsigned& moveLimit, int index 
    throw NoSolution();
 }
 
-Sudoku generate(int dim)
+Sudoku generate(int dim, double level=0.7)
 {
    for (int i = 0; i < 20; i++)
    {
@@ -230,8 +230,17 @@ Sudoku generate(int dim)
          }
          unsigned limit = 1000;
          Sudoku solved = solve(s, steps, limit);
-         for (int i = 1; i <= 0.7*dim*dim; i++)
-            solved.move(Move(0, rand()%dim, rand()%dim));
+         for (int i = 1; i <= level*dim*dim; i++)
+            while (true)
+            {
+               int x = rand()%dim;
+               int y = rand()%dim;
+               if (not solved.isEmpty(x, y))
+               {
+                  solved.move(Move(0, x, y));
+                  break;
+               }
+            }
          return solved;
       } catch (const MoveLimit& e) { }
    }

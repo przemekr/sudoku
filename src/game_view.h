@@ -109,8 +109,8 @@ public:
       br_x = sx-20;
       br_y = 200;
 
-      xsize = (br_x - tl_x)/(sudoku.getDim()?:9);
-      ysize = (tl_y - br_y)/(sudoku.getDim()?:9);
+      xsize = (br_x - tl_x)/(double)(sudoku.getDim()?:9);
+      ysize = (tl_y - br_y)/(double)(sudoku.getDim()?:9);
 
       // re-create all elements
       for (int i = 0; i < gobjs.size(); i++)
