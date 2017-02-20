@@ -17,7 +17,7 @@ bld.stlib(
       )
 
 bld.program(
-      source   = ['agg_app.cc', 'agg_button_ctrl.cpp']
+      source   = ['agg_app.cc', 'agg_button_ctrl.cpp', 'interactive_polygon.cpp']
                   + bld.env.PLATFORM_SRC,
       includes = '. .. agg-2.5/include',
       cxxflags = ['-O0', '-ggdb'],

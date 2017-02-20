@@ -1,3 +1,6 @@
+#ifndef SUDOKU__
+#define SUDOKU__
+
 #include <vector>
 #include <algorithm>
 #include <sstream>
@@ -31,6 +34,13 @@ public:
    {
       rows.resize(0);
       dim = 0;
+   }
+   Sudoku(const Sudoku& other):
+      rows(other.rows),
+      all(other.all),
+      dim(other.dim),
+      subsize(other.subsize)
+   {
    }
 
    Sudoku (Digits rowdata)
@@ -231,6 +241,7 @@ Sudoku generate(int dim, double level=0.7)
          unsigned limit = 1000;
          Sudoku solved = solve(s, steps, limit);
          for (int i = 1; i <= level*dim*dim; i++)
+         {
             while (true)
             {
                int x = rand()%dim;
@@ -241,8 +252,11 @@ Sudoku generate(int dim, double level=0.7)
                   break;
                }
             }
+         }
          return solved;
       } catch (const MoveLimit& e) { }
    }
    return Sudoku(std::vector<int>(dim*dim, 0));
 }
+
+#endif /* end of: SUDOKU__ */

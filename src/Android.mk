@@ -6,7 +6,7 @@ LOCAL_MODULE := main
 
 SDL_PATH := ../SDL
 
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/$(SDL_PATH)/include $(LOCAL_PATH)/agg-2.5/include $(LOCAL_PATH)/ocrad-0.23
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/$(SDL_PATH)/include $(LOCAL_PATH)/$(SDL_PATH)/src/core/android/  $(LOCAL_PATH)/agg-2.5/include $(LOCAL_PATH)/ocrad-0.23
 LOCAL_CPPFLAGS += -DMOBILE -DDEBUG -DPROGVERSION="\"0.23\""
 LOCAL_CXXFLAGS += -fexceptions
 

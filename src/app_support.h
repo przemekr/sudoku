@@ -54,13 +54,14 @@
 #include "time.h"
 
 #include <time.h>
+#include "sudoku.h"
 
 #ifdef MOBILE
 #define START_H  900
 #define START_W  500
 #define WINDOW_FLAGS agg::window_fullscreen | agg::window_keep_aspect_ratio
 #else
-#define START_H  680
+#define START_H  980
 #define START_W  600
 #define WINDOW_FLAGS agg::window_resize | agg::window_hw_buffer
 #endif
@@ -161,13 +162,13 @@ public:
       agg::render_scanlines(m_ras, m_sl, ren);
    }
 
-   void rotate_img(unsigned idx, double ang)
+   void rotate_img(unsigned idx, double ang, unsigned idx_to)
    {
-      agg::rendering_buffer rbuf;
       agg::scanline_u8 sl;
       agg::rasterizer_scanline_aa<> ras;
       double w = rbuf_img(idx).width();
       double h = rbuf_img(idx).height();
+      create_img(idx_to, h, w);
 
       agg::trans_affine shape_mtx;
       shape_mtx.reset();
@@ -176,9 +177,7 @@ public:
       shape_mtx *= agg::trans_affine_translation(h/2, w/2);
       shape_mtx.invert();
 
-      unsigned char* pixels = (unsigned char*)malloc(w*h*4);
-      rbuf.attach(pixels, h, w, -h*4);
-      pixfmt_type pfb(rbuf);
+      pixfmt_type pfb(rbuf_img(idx_to));
       agg::renderer_base<pixfmt_type> img(pfb);
 
       typedef agg::span_interpolator_linear<agg::trans_affine> interpolator_type;
@@ -195,15 +194,10 @@ public:
       ras.line_to_d(0,w);
 
       agg::render_scanlines_aa(ras, sl, img, sa, sg);
-      rbuf_img(idx).attach(pixels, h, w, -h*4);
-      load_img(idx, "");
    }
 
-   void scale_img(unsigned idx,
-         unsigned xsize, unsigned ysize,
-         unsigned xoff = 0,  unsigned yoff = 0)
+   void scale_img(unsigned idx, unsigned xsize, unsigned ysize, unsigned idx_to)
    {
-      agg::rendering_buffer rbuf;
       agg::scanline_u8 sl;
       agg::rasterizer_scanline_aa<> ras;
       double w = rbuf_img(idx).width();
@@ -215,10 +209,8 @@ public:
       shape_mtx.reset();
       shape_mtx *= agg::trans_affine_scaling(w/nw, h/nh);
 
-      unsigned char* pixels = (unsigned char*)malloc(xsize*ysize*4);
-      DEBUG_PRINT("malloc: %d\n", xsize*ysize*4);
-      rbuf.attach(pixels, xsize, ysize, -xsize*4);
-      pixfmt_type pfb(rbuf);
+      create_img(idx_to, nw, nh);
+      pixfmt_type pfb(rbuf_img(idx_to));
       agg::renderer_base<pixfmt_type> img(pfb);
 
       typedef agg::span_interpolator_linear<agg::trans_affine> interpolator_type;
@@ -235,7 +227,6 @@ public:
       ras.line_to_d(0,ysize);
 
       agg::render_scanlines_aa(ras, sl, img, sa, sg);
-      rbuf_img(idx).attach(pixels, xsize, ysize, -xsize*4);
    }
 
 
@@ -296,14 +287,13 @@ public:
       in_background = false;
    }
    int  current_sound;
-
+   Sudoku sudoku;
 protected:
    View* view;
    bool sound;
    bool music;
    bool in_background;
 };
-
 
 
 

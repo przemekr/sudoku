@@ -1,30 +1,43 @@
 class gSelect_bar: public gobj
 {
 public:
-   gSelect_bar (double x, double y, std::vector<int> d, int in_x, int in_y):
-      gobj(x, y), selected(0), init_x(x), init_y(y)
+   gSelect_bar (double x, double y): gobj(x, y), selected(0), init_x(0), init_y(0)
    {
-      digits.push_back(new gDigit(x, y, 0));
-      for (auto it = d.begin(); it != d.end(); it++)
-      {
-         x += 50;
-         digits.push_back(new gDigit(x, y, *it));
-      }
-      scroll(init_x, init_y);
    };
-   ~gSelect_bar ()
+   void clear()
    {
       for (auto it = digits.begin(); it != digits.end(); it++)
       {
          delete *it;
       }
+      digits.resize(0);
+   }
+
+   bool is_active()
+   {
+      return digits.size() != 0;
+   }
+
+   void set(int x, int y, std::vector<int> d)
+   {
+      clear();
+      init_x = x;
+      init_y = y;
+      int i = 0;
+
+      digits.push_back(new gDigit(tl_x, tl_y, 0));
+      for (auto it = d.begin(); it != d.end(); it++)
+      {
+         i += 50;
+         digits.push_back(new gDigit(tl_x+i, tl_y, *it));
+      }
+      scroll(init_x, init_y);
    }
 
    int getSelected()
    {
       if (not digits.size())
          return 0;
-
       return digits[selected]->getValue();
    }
 

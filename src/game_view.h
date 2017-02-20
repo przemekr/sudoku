@@ -8,19 +8,19 @@ class GameView : public AppView
 public:
    GameView(App& app): AppView(app),
    cnt(0), bgc(0), stepIdx(0),
-   select_bar(NULL),
-   menu(20,  20, 100, 45,   "New",  !flip_y),
+   select_bar(20, 700),
+   new_game(20,  20, 100, 45,   "New",  !flip_y),
    scan(120, 20, 200, 45,   "Scan", !flip_y),
    hint(220, 20, 300, 45,   "Hint", !flip_y),
    undo(320, 20, 400, 45,   "Undo", !flip_y),
-   solveB(420, 20, 500, 45,   "Solve", !flip_y)
+   solveB(420, 20, 500, 45, "Solve", !flip_y)
    {
-      menu.background_color(yellow);
+      new_game.background_color(yellow);
       scan.background_color(yellow);
       hint.background_color(yellow);
       undo.background_color(yellow);
       solveB.background_color(yellow);
-      add_ctrl(menu);
+      add_ctrl(new_game);
       add_ctrl(scan);
       add_ctrl(hint);
       add_ctrl(undo);
@@ -33,27 +33,27 @@ public:
       int h = app.rbuf_window().height();
       unsigned limit = 0;
 
-
-      //pixfmt_type pf(app.rbuf_img(0));
-      //imgRec = new ImageRecognizer(app.rbuf_img(0).width(), app.rbuf_img(0).height(), pf);
-
-      sudoku = generate(9);
+      sudoku = app.sudoku;
       on_resize(w, h);
 
-      //std::cout << "recognized\n\n" << sudoku.str() << std::endl;
-      //std::cout << "solved\n\n" << solve(sudoku, steps, limit).str() << std::endl;
       stepIdx = 0;
       app.wait_mode(false);
+
+      errors.clear();
+      for (int y = 0; y < sudoku.getDim(); y++)
+         for (int x = 0; x < sudoku.getDim(); x++)
+         {
+            if (sudoku.isEmpty(x,y) and sudoku.getPossible(x,y).size() == 0)
+               errors.push_back(std::pair<int,int>(x,y));
+         }
    }
 
    void on_mouse_button_up(int x, int y, unsigned flags)
    {
-      if (select_bar)
+      if (select_bar.is_active())
       {
-         int value = select_bar->getSelected();
-         gobjs.erase(std::remove(gobjs.begin(), gobjs.end(), select_bar), gobjs.end());
-         delete select_bar;
-         select_bar = NULL;
+         int value = select_bar.getSelected();
+         select_bar.clear();
          move(selected_x, selected_y, value);
       }
       if (m_ctrls.on_mouse_button_up(x, y))
@@ -69,14 +69,7 @@ public:
       {
          selected_x = pixToCol(x);
          selected_y = pixToRow(y);
-         if (select_bar)
-         {
-            gobjs.erase(std::remove(gobjs.begin(), gobjs.end(), select_bar), gobjs.end());
-            delete select_bar;
-            select_bar = NULL;
-         }
-         select_bar = new gSelect_bar(120, 60, sudoku.getPossible(selected_x, selected_y), x, y);
-         gobjs.push_back(select_bar);
+         select_bar.set(x, y, sudoku.getPossible(selected_x, selected_y));
       }
 
       if (m_ctrls.on_mouse_button_down(x, y))
@@ -88,9 +81,9 @@ public:
 
    void on_mouse_move(int x, int y, unsigned flags)
    {
-      if (select_bar && (flags & agg::mouse_left))
+      if (select_bar.is_active() && (flags & agg::mouse_left))
       {
-         select_bar->scroll(x, y);
+         select_bar.scroll(x, y);
       }
 
       if (m_ctrls.on_mouse_move(x, y, (flags & agg::mouse_left) != 0))
@@ -104,20 +97,20 @@ public:
    virtual void on_resize(int sx, int sy)
    {
       tl_x = 20;
-      tl_y = sy-20;
-
+      tl_y = sy-100;
       br_x = sx-20;
-      br_y = 200;
+      br_y = tl_y-(br_x-tl_x);
+      select_bar.tl_y = sy-80;
 
       xsize = (br_x - tl_x)/(double)(sudoku.getDim()?:9);
       ysize = (tl_y - br_y)/(double)(sudoku.getDim()?:9);
 
       // re-create all elements
-      for (int i = 0; i < gobjs.size(); i++)
+      for (int i = 0; i < digits.size(); i++)
       {
-         delete gobjs[i];
+         delete digits[i];
       }
-      gobjs.resize(0);
+      digits.resize(0);
 
       for (int j = 0; j < sudoku.getDim(); j++)
       {
@@ -127,7 +120,7 @@ public:
          {
             if (*it)
             {
-               gobjs.push_back(new gDigit(
+               digits.push_back(new gDigit(
                         tl_x+i*xsize+0.3*xsize,
                         br_y+j*ysize+0.3*ysize,
                         *it));
@@ -148,15 +141,40 @@ public:
 
    void on_ctrl_change()
    {
-      if (menu.status())
+      if (new_game.status())
       {
-         menu.status(false);
+         new_game.status(false);
+         moves.clear();
+         steps.clear();
+         app.sudoku = generate(9, 0.6);
          app.changeView("game");
       }
       if (undo.status())
       {
          undo.status(false);
          undoMove();
+      }
+      if (scan.status() && strcmp(scan.label(), "Scan") == 0)
+      {
+         scan.label("Done");
+#ifdef ANDROID
+         __android_log_print(ANDROID_LOG_INFO, "SUDOKU", "Start Scan");
+         JNIEnv *env = Android_JNI_GetEnv();
+         __android_log_print(ANDROID_LOG_INFO, "SUDOKU", "Got env %p", env);
+         jclass cls = env->FindClass("com/traffar/sudoku/activity");
+         __android_log_print(ANDROID_LOG_INFO, "SUDOKU", "Got cls %p", cls);
+         jmethodID take_photo = env->GetStaticMethodID(cls, "take_photo", "()V");
+         __android_log_print(ANDROID_LOG_INFO, "SUDOKU", "Got method %p", take_photo);
+         env->CallStaticVoidMethod(cls, take_photo);
+         __android_log_print(ANDROID_LOG_INFO, "SUDOKU", "Done call static method");
+#else
+         app.changeView("recognize");
+#endif
+
+      }
+      if (not scan.status() && strcmp(scan.label(), "Done") == 0)
+      {
+         scan.label("Scan");
       }
       if (hint.status())
       {
@@ -210,11 +228,20 @@ public:
       agg::scanline_u8 sl;
       ras.reset();
       rbase.clear(lgray);
+      rbase.copy_from(app.rbuf_img(2), 0, 0, 0);
 
       int w = app.rbuf_window().width();
       int h = app.rbuf_window().height();
 
-      rbase.blend_bar(tl_x, tl_y, br_x, br_y, white, 255);
+      if (scan.status())
+      {
+         agg::rect_i rec(tl_x, br_y, br_x, tl_y);
+         pixfmt_type pf2(app.rbuf_img(3));
+         rbase.blend_from(pf2, &rec, 0, 0, 150);
+      } else {
+         rbase.blend_bar(tl_x, tl_y, br_x, br_y, white, 200);
+      }
+
 
       // draw grid
       for (int i = 0; i < 10; i++)
@@ -234,12 +261,13 @@ public:
          rbase.blend_bar(colToPix(it->first), rowToPix(it->second), colToPix(it->first+1), rowToPix(it->second+1), red, 80);
       }
 
-      for (auto it = gobjs.begin(); it != gobjs.end(); it++)
+      for (auto it = digits.begin(); it != digits.end(); it++)
       {
          (*it)->draw(rbase);
       }
+      select_bar.draw(rbase);
 
-      agg::render_ctrl(ras, sl, rbase, menu);
+      agg::render_ctrl(ras, sl, rbase, new_game);
       agg::render_ctrl(ras, sl, rbase, scan);
       agg::render_ctrl(ras, sl, rbase, hint);
       agg::render_ctrl(ras, sl, rbase, undo);
@@ -301,11 +329,22 @@ private:
       sudoku.move(Move(value, x, y));
       if (value)
       {
-         gobjs.push_back(new gDigit(
+         digits.push_back(new gDigit(
                   colToPixI(x),
                   rowToPixI(y),
                   value));
          moves.push_back(m);
+      } else if (scan.status())
+      {
+         for (auto it = digits.begin(); it != digits.end(); it++)
+         {
+            if ((*it)->tl_x == colToPixI(x) and (*it)->tl_y == rowToPixI(y))
+            {
+               delete *it;
+               digits.erase(it);
+               break;
+            }
+         }
       }
 
       errors.clear();
@@ -319,7 +358,7 @@ private:
 
    void update(long elapsed_time)
    {
-      for(auto it = gobjs.begin(); it != gobjs.end(); it++)
+      for(auto it = digits.begin(); it != digits.end(); it++)
       {
          (*it)->update(1.0*elapsed_time/1000);
       }
@@ -333,17 +372,17 @@ private:
       {
          solveB.status(false);
       }
+      select_bar.update(elapsed_time);
    }
-   agg::button_ctrl<agg::rgba8> menu;
+   agg::button_ctrl<agg::rgba8> new_game;
    agg::button_ctrl<agg::rgba8> scan;
    agg::button_ctrl<agg::rgba8> hint;
    agg::button_ctrl<agg::rgba8> undo;
    agg::button_ctrl<agg::rgba8> solveB;
    Sudoku sudoku;
-   ImageRecognizer* imgRec;
    std::vector<Move> steps;
    std::vector<Move> moves;
-   std::vector<gobj*> gobjs;
+   std::vector<gobj*> digits;
    std::vector<std::pair<int,int> > errors;
    int stepIdx;
    int cnt;
@@ -354,7 +393,7 @@ private:
    int tl_y;
    int br_x;
    int br_y;
-   gSelect_bar* select_bar;
+   gSelect_bar select_bar;
    int selected_x;
    int selected_y;
 };
