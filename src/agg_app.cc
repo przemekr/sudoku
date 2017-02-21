@@ -99,12 +99,9 @@ extern "C" {
    JNIEXPORT void JNICALL Java_com_traffar_sudoku_activity_onTakePhotoResult(
                                     JNIEnv* env, jclass cls)
    {
-      __android_log_print(ANDROID_LOG_DEBUG, "SUDOKU", "onTakePhotoResult");
-      _app->load_img(0, "/storage/emulated/0/Pictures/SUDOKU/sudoku.jpg");
-      pixfmt_type pf(_app->rbuf_img(0));
-      ImageRecognizer imgRec(_app->rbuf_img(0).width(), _app->rbuf_img(0).height(), pf);
-      imgRec.find_corner();
-      __android_log_print(ANDROID_LOG_INFO, "SUDOKU", "tl %d.%d br %d.%d", imgRec.tl_x, imgRec.tl_y, imgRec.br_x, imgRec.br_y);
+      __android_log_print(ANDROID_LOG_INFO, "SUDOKU", "onTakePhotoResult");
+      _app->load_img(0, "/storage/sdcard0/DCIM/Camera/sudoku.jpg");
+      _app->changeView("recognize");
    }
 }
 #endif

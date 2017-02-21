@@ -16,7 +16,9 @@ public:
    void enter()
    {
       app.wait_mode(false);
+#ifndef __ANDROID__
       app.load_img(0, "sudoku.jpg");
+#endif
       int w = app.rbuf_img(0).width();
       int h = app.rbuf_img(0).height();
       double scale = std::max(START_W, START_H)*1.0/std::max(w, h);

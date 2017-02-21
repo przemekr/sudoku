@@ -75,7 +75,7 @@ LOCAL_SRC_FILES := $(SDL_PATH)/src/main/android/SDL_android_main.c \
 	agg-2.5/src/ctrl/agg_slider_ctrl.cpp \
 	agg-2.5/src/ctrl/agg_spline_ctrl.cpp \
 	agg-2.5/src/platform/sdl2/agg_platform_support.cpp \
-	agg_app.cc agg_button_ctrl.cpp \
+	agg_app.cc agg_button_ctrl.cpp interactive_polygon.cpp \
 	$(OCRAD_FILES)
 
 LOCAL_SHARED_LIBRARIES := SDL2 SDL2_image SDL2_mixer

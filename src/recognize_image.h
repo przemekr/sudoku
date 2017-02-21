@@ -170,7 +170,7 @@ public:
                printf("\n");
             }
             int ret1 = OCRAD_set_image(desc, &pixmap, false);
-            int ret2 = OCRAD_set_threshold(desc, -1);
+            int ret2 = OCRAD_set_threshold(desc, 60);
             int ret3 = OCRAD_set_utf8_format(desc, 0);
             int ret4 = OCRAD_recognize(desc, false);
 

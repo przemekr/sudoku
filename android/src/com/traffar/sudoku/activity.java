@@ -47,7 +47,7 @@ public class activity extends SDLActivity
       // String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
       // String imageFileName = JPEG_FILE_PREFIX + timeStamp + "_";
       File albumF = mediaStorageDir;
-      File imageF = File.createTempFile("sudoku", JPEG_FILE_SUFFIX, albumF);
+      File imageF = new File("/storage/sdcard0/DCIM/Camera/sudoku.jpg");
       return imageF;
    }
 
