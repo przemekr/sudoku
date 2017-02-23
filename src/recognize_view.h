@@ -60,6 +60,8 @@ public:
       t_x2 = w-20;
       t_y2 = h-100;
       t_y1 = t_y2-(t_x2-t_x1);
+      force_redraw();
+      corrner_moved = true;
    }
 
 

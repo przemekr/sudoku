@@ -37,7 +37,7 @@ public:
       offx(x), offy(y), height(h), width(w), 
       tl_x(x), tl_y(h), br_x(w), br_y(y), pf(img)
    {
-      printf("ImgRec %d.%d %d.%d\n", tl_x, tl_y, br_x, br_y);
+      //printf("ImgRec %d.%d %d.%d\n", tl_x, tl_y, br_x, br_y);
    }
 
 
@@ -56,13 +56,13 @@ public:
             {
                //printf("%02x", pat[PATL*ay+ax]);
                //printf("%03d ", (int)r);
-               printf("%03d-%03d=%03d ", pat[PATL*ay+ax], r, diff);
+               //printf("%03d-%03d=%03d ", pat[PATL*ay+ax], r, diff);
                //printf("%c", r > 60?' ':'#');
             }
          }
          if (debug)
          {
-            printf("\n");
+            //printf("\n");
          }
       }
       return sum;
@@ -73,7 +73,7 @@ public:
       int best_result = 1 << 30;
       int bx = offx;
       int by = height-AREA;
-      printf("TL: x %d-%d y %d-%d\n", bx, bx+AREA, by, by+AREA);
+      //printf("TL: x %d-%d y %d-%d\n", bx, bx+AREA, by, by+AREA);
       for (int x = bx; x < bx+AREA; x++)
          for (int y = by; y < by+AREA; y++)
          {
@@ -89,7 +89,7 @@ public:
       best_result = 1 << 30;
       bx = width - (AREA+PATL);
       by = offy + PATL;
-      printf("BR: x %d-%d y %d-%d\n", bx, bx+AREA, by, by+AREA);
+      //printf("BR: x %d-%d y %d-%d\n", bx, bx+AREA, by, by+AREA);
       for (int x = bx; x < bx+AREA; x++)
          for (int y = by; y < by+AREA; y++)
          {
@@ -142,8 +142,8 @@ public:
       int tgt_size_y = tl_y - br_y;
       int sqxsize = tgt_size_x/9;
       int sqysize = tgt_size_y/9;
-      printf("recognize_digits %d.%d %d.%d\n", tl_x,tl_y, br_x,br_y);
-      printf("recognize_digits %d.%d %d.%d\n", tgt_size_x,tgt_size_y, sqxsize,sqysize);
+      //printf("recognize_digits %d.%d %d.%d\n", tl_x,tl_y, br_x,br_y);
+      //printf("recognize_digits %d.%d %d.%d\n", tgt_size_x,tgt_size_y, sqxsize,sqysize);
 
       uint8_t* pixels = (uint8_t*)malloc(sqysize*sqxsize*sizeof(char));
       OCRAD_Pixmap pixmap;
@@ -164,10 +164,10 @@ public:
             {
                for (int xa = 3; xa < sqxsize-3; xa++)
                {
-                  printf("%c", pf.pixel(bx+xa, by+ya).r>60? '#':' ');
+                  //printf("%c", pf.pixel(bx+xa, by+ya).r>60? '#':' ');
                   pixels[(sqysize-3-ya)*(sqxsize-PATL)+xa] = pf.pixel(bx+xa, by+ya).r;
                }
-               printf("\n");
+               //printf("\n");
             }
             int ret1 = OCRAD_set_image(desc, &pixmap, false);
             int ret2 = OCRAD_set_threshold(desc, 60);
@@ -177,7 +177,7 @@ public:
             digits[y][x] = get_digit(desc);
             OCRAD_close(desc);
          }
-         printf("\n\n");
+         //printf("\n\n");
       }
          
       Digits d;

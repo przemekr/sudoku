@@ -7,6 +7,7 @@
 #include <set>
 #include <ctime>
 #include <math.h>
+#include <iostream>
 
 typedef std::vector<int> Digits;
 struct NoSolution {};
@@ -23,8 +24,37 @@ struct Move
    {
       return x == o.x and y == o.y and value == o.value;
    }
+   std::string str()
+   {
+      std::stringstream ss;
+      ss << value << " " << x << " " << y;
+      return ss.str();
+   }
 };
 
+std::string move_list_to_str(std::vector<Move> moves)
+{
+   std::stringstream ss;
+   std::for_each(moves.begin(), moves.end(), [&](Move& m) {
+         ss << m.str() << "\n"; });
+   return ss.str();
+}
+
+std::vector<Move> move_list(std::string s)
+{
+   std::stringstream ss(s);
+   std::string line;
+   std::vector<Move> moves;
+   while (std::getline(ss, line))
+   {
+      std::stringstream ssline(line);
+      int x; ssline >> x;
+      int y; ssline >> y;
+      int v; ssline >> v;
+      moves.push_back(Move(x, y, v));
+   }
+   return moves;
+}
 
 
 class Sudoku
@@ -55,6 +85,34 @@ public:
       }
       all.push_back(dim);
    };
+
+   Sudoku (std::string str)
+   {
+      Digits rowdata;
+      for (auto i = str.begin(); i != str.end(); i++)
+      {
+         if (std::isdigit(*i))
+         {
+            rowdata.push_back(*i-'0');
+         }
+      }
+       
+      dim = (int)sqrt((double)rowdata.size());
+      subsize = (int)sqrt((double)dim);
+      for (int i = dim-1; i >= 0; i--)
+      {
+         Digits row(i*dim+rowdata.begin(), (i+1)*dim+rowdata.begin());
+         rows.push_back(row);
+      }
+
+      for (int i = 0; i < dim; i++)
+      {
+         all.push_back(i);
+      }
+      all.push_back(dim);
+   }
+
+
    virtual ~Sudoku () {};
 
    Digits getRow(int nr)
@@ -172,21 +230,42 @@ public:
 
    bool valid()
    {
+      return get_errors().size() == 0;
+   }
+
+   std::vector<std::pair<int,int> > get_errors()
+   {
+      std::vector< std::pair<int,int> > errors;
+
       for (int i = 0; i < dim; i++)
+      {
          if (not uniq(getRow(i)))
-            return false;
+         {
+            for (int j = 0; j < dim; j++)
+            {
+               errors.push_back(std::pair<int,int>(j,i));
+            }
+         }
+      }
 
       for (int i = 0; i < dim; i++)
          if (not uniq(getCol(i)))
-            return false;
+         {
+            for (int j = 0; j < dim; j++)
+               errors.push_back(std::pair<int,int>(i,j));
+         }
 
       for (int i = 0; i < dim; i += subsize)
+      {
          for (int j = 0; j < dim; j += subsize)
          {
             if (not uniq(getSub(i, j)))
-               return false;
+            {
+               errors.push_back(std::pair<int,int>(i,j));
+            }
          }
-      return true;
+      }
+      return errors;
    }
 
    int getDim()

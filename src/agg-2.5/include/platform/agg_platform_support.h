@@ -369,9 +369,9 @@ namespace agg
             return false;
         }
 
+        unsigned      m_num_ctrl;
     private:
         ctrl*         m_ctrl[max_ctrl];
-        unsigned      m_num_ctrl;
         int           m_cur_ctrl;
     };
 
@@ -658,24 +658,9 @@ namespace agg
         double elapsed_time() const;
 
         //--------------------------------------------------------------------
-        // Get the full file name. In most cases it simply returns
-        // file_name. As it's appropriate in many systems if you open
-        // a file by its name without specifying the path, it tries to 
-        // open it in the current directory. The demos usually expect 
-        // all the supplementary files to be placed in the current 
-        // directory, that is usually coincides with the directory where
-        // the the executable is. However, in some systems (BeOS) it's not so. 
-        // For those kinds of systems full_file_name() can help access files 
-        // preserving commonly used policy.
-        // So, it's a good idea to use in the demos the following:
-        // FILE* fd = fopen(full_file_name("some.file"), "r"); 
-        // instead of
-        // FILE* fd = fopen("some.file", "r"); 
-        const char* full_file_name(const char* file_name);
+        // 
+        const char* get_storage_path();
 
-        //--------------------------------------------------------------------
-        // Get a directory location where it is save to create files.
-        FILE* open_rw_file(const char* org, const char* app, const char* name);
 
     public:
         platform_specific* m_specific;

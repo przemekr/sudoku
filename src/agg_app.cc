@@ -21,6 +21,8 @@
 
 #include <math.h>
 #include <algorithm> 
+#include <cctype>
+#include <string>
 #include <stack>
 #include <unistd.h>
 #include <stdlib.h>
@@ -38,6 +40,7 @@
 #include "app_support.h"
 #include "game_view.h"
 #include "menu_view.h"
+#include "load_view.h"
 #include "recognize_view.h"
 
 
@@ -50,6 +53,7 @@ public:
       game = new GameView(*this);
       menu  = new MenuView(*this);
       recognize = new RecognizeView(*this);
+      load = new LoadView(*this);
       view = game;
    }
    virtual void changeView(const char* name) 
@@ -61,12 +65,15 @@ public:
          view = game;
       if (strcmp(name, "recognize") == 0)
          view = recognize;
+      if (strcmp(name, "load") == 0)
+         view = load;
       view->enter();
    };
 private:
    GameView* game;
    MenuView* menu;
    RecognizeView* recognize;
+   LoadView* load;
 };
 
 static the_application* _app = NULL;
@@ -77,11 +84,13 @@ int agg_main(int argc, char* argv[])
     app.caption("Sudoku Kuai");
     _app = &app;
 
-
     if (app.init(START_W, START_H, WINDOW_FLAGS))
     {
        try {
-          app.load_img(2, "leaves.png");
+          app.load_img(5, "leaves.png");
+          app.load_img(6, "panda.png");
+          app.load_img(7, "sun.png");
+          app.sudoku = generate(9, 0.6);
           app.changeView("game");
           return app.run();
        } catch (...) {

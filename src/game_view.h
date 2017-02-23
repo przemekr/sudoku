@@ -9,43 +9,41 @@ public:
    GameView(App& app): AppView(app),
    cnt(0), bgc(0), stepIdx(0),
    select_bar(20, 700),
-   new_game(20,  20, 100, 45,   "New",  !flip_y),
-   scan(120, 20, 200, 45,   "Scan", !flip_y),
-   hint(220, 20, 300, 45,   "Hint", !flip_y),
-   undo(320, 20, 400, 45,   "Undo", !flip_y),
-   solveB(420, 20, 500, 45, "Solve", !flip_y)
+   new_game(20,  20, 100, 45, "New", !flip_y),
+   scan(120, 20, 200, 45,   "Scan",  !flip_y),
+   hint(220, 20, 300, 45,   "Hint",  !flip_y),
+   undo(320, 20, 400, 45,   "Undo",  !flip_y),
+   solveB(420, 20, 500, 45, "Solve", !flip_y),
+   save(20,  60, 100, 85,   "Save",  !flip_y),
+   load(420, 60, 500, 85,   "Load",  !flip_y)
    {
       new_game.background_color(yellow);
       scan.background_color(yellow);
       hint.background_color(yellow);
       undo.background_color(yellow);
       solveB.background_color(yellow);
+      save.background_color(yellow);
+      load.background_color(yellow);
       add_ctrl(new_game);
       add_ctrl(scan);
       add_ctrl(hint);
       add_ctrl(undo);
       add_ctrl(solveB);
+      add_ctrl(save);
+      add_ctrl(load);
    }
 
    void enter()
    {
       int w = app.rbuf_window().width();
       int h = app.rbuf_window().height();
+      background = 5+rand()%3;
       unsigned limit = 0;
-
-      sudoku = app.sudoku;
       on_resize(w, h);
 
       stepIdx = 0;
       app.wait_mode(false);
-
-      errors.clear();
-      for (int y = 0; y < sudoku.getDim(); y++)
-         for (int x = 0; x < sudoku.getDim(); x++)
-         {
-            if (sudoku.isEmpty(x,y) and sudoku.getPossible(x,y).size() == 0)
-               errors.push_back(std::pair<int,int>(x,y));
-         }
+      update_errors();
    }
 
    void on_mouse_button_up(int x, int y, unsigned flags)
@@ -54,7 +52,7 @@ public:
       {
          int value = select_bar.getSelected();
          select_bar.clear();
-         move(selected_x, selected_y, value);
+         move(selected_x, selected_y, value, scan.status());
       }
       if (m_ctrls.on_mouse_button_up(x, y))
       {
@@ -69,7 +67,12 @@ public:
       {
          selected_x = pixToCol(x);
          selected_y = pixToRow(y);
-         select_bar.set(x, y, sudoku.getPossible(selected_x, selected_y));
+         auto possible = app.sudoku.getPossible(selected_x, selected_y);
+         for (auto i = possible.begin(); i != possible.end(); i++)
+         {
+            std::cout << *i << std::endl;
+         }
+         select_bar.set(x, y, app.sudoku.getPossible(selected_x, selected_y));
       }
 
       if (m_ctrls.on_mouse_button_down(x, y))
@@ -102,8 +105,8 @@ public:
       br_y = tl_y-(br_x-tl_x);
       select_bar.tl_y = sy-80;
 
-      xsize = (br_x - tl_x)/(double)(sudoku.getDim()?:9);
-      ysize = (tl_y - br_y)/(double)(sudoku.getDim()?:9);
+      xsize = (br_x - tl_x)/(double)(app.sudoku.getDim()?:9);
+      ysize = (tl_y - br_y)/(double)(app.sudoku.getDim()?:9);
 
       // re-create all elements
       for (int i = 0; i < digits.size(); i++)
@@ -112,9 +115,9 @@ public:
       }
       digits.resize(0);
 
-      for (int j = 0; j < sudoku.getDim(); j++)
+      for (int j = 0; j < app.sudoku.getDim(); j++)
       {
-         Digits d = sudoku.getRow(j);
+         Digits d = app.sudoku.getRow(j);
          int i = 0;
          for (auto it = d.begin(); it != d.end(); it++)
          {
@@ -144,7 +147,7 @@ public:
       if (new_game.status())
       {
          new_game.status(false);
-         moves.clear();
+         app.moves.clear();
          steps.clear();
          app.sudoku = generate(9, 0.6);
          app.changeView("game");
@@ -179,14 +182,14 @@ public:
       if (hint.status())
       {
          hint.status(false);
-         if (errors.size() or not sudoku.valid())
+         if (errors.size())
          {
             return;
          }
          steps.clear();
          try {
             unsigned int limit = 5000;
-            solve(sudoku, steps, limit);
+            solve(app.sudoku, steps, limit);
             move(steps[0].x, steps[0].y, steps[0].value);
          } catch (const NoSolution& e)
          {
@@ -198,7 +201,7 @@ public:
       }
       if (solveB.status())
       {
-         if (errors.size() or not sudoku.valid())
+         if (errors.size())
          {
             solveB.status(false);
             return;
@@ -206,7 +209,7 @@ public:
          steps.clear();
          try {
             unsigned int limit = 5000;
-            solve(sudoku, steps, limit);
+            solve(app.sudoku, steps, limit);
             stepIdx = 0;
          } catch (const NoSolution& e)
          {
@@ -218,6 +221,17 @@ public:
             std::cout << "No Solution (Move Limit)!" << std::endl;
          }
       }
+      if (save.status())
+      {
+         save.status(false);
+         app.save_game(app.sudoku, app.moves);
+         app.changeView("game");
+      }
+      if (load.status())
+      {
+         load.status(false);
+         app.changeView("load");
+      }
    }
 
    void on_draw()
@@ -228,7 +242,7 @@ public:
       agg::scanline_u8 sl;
       ras.reset();
       rbase.clear(lgray);
-      rbase.copy_from(app.rbuf_img(2), 0, 0, 0);
+      rbase.copy_from(app.rbuf_img(background), 0, 0, 0);
 
       int w = app.rbuf_window().width();
       int h = app.rbuf_window().height();
@@ -272,6 +286,8 @@ public:
       agg::render_ctrl(ras, sl, rbase, hint);
       agg::render_ctrl(ras, sl, rbase, undo);
       agg::render_ctrl(ras, sl, rbase, solveB);
+      agg::render_ctrl(ras, sl, rbase, save);
+      agg::render_ctrl(ras, sl, rbase, load);
 
    }
 
@@ -311,30 +327,25 @@ private:
 
    void undoMove()
    {
-      if (moves.empty())
+      if (app.moves.empty())
          return;
-      Move m = moves.back();
-      moves.pop_back();
-      move(m.x, m.y, 0);
-
-      int w = app.rbuf_window().width();
-      int h = app.rbuf_window().height();
-      on_resize(w, h);
-
+      Move m = app.moves.back();
+      app.moves.pop_back();
+      move(m.x, m.y, 0, true);
    }
 
-   void move(int x, int y, int value)
+   void move(int x, int y, int value, bool removeOK = false)
    {
       Move m(value, x, y);
-      sudoku.move(Move(value, x, y));
       if (value)
       {
          digits.push_back(new gDigit(
                   colToPixI(x),
                   rowToPixI(y),
                   value));
-         moves.push_back(m);
-      } else if (scan.status())
+         app.sudoku.move(Move(value, x, y));
+         app.moves.push_back(m);
+      } else if (removeOK)
       {
          for (auto it = digits.begin(); it != digits.end(); it++)
          {
@@ -345,13 +356,18 @@ private:
                break;
             }
          }
+         app.sudoku.move(Move(value, x, y));
       }
+      update_errors();
+   }
 
-      errors.clear();
-      for (int y = 0; y < sudoku.getDim(); y++)
-         for (int x = 0; x < sudoku.getDim(); x++)
+   void update_errors()
+   {
+      errors = app.sudoku.get_errors();
+      for (int y = 0; y < app.sudoku.getDim(); y++)
+         for (int x = 0; x < app.sudoku.getDim(); x++)
          {
-            if (sudoku.isEmpty(x,y) and sudoku.getPossible(x,y).size() == 0)
+            if (app.sudoku.isEmpty(x,y) and app.sudoku.getPossible(x,y).size() == 0)
                errors.push_back(std::pair<int,int>(x,y));
          }
    }
@@ -379,9 +395,9 @@ private:
    agg::button_ctrl<agg::rgba8> hint;
    agg::button_ctrl<agg::rgba8> undo;
    agg::button_ctrl<agg::rgba8> solveB;
-   Sudoku sudoku;
+   agg::button_ctrl<agg::rgba8> save;
+   agg::button_ctrl<agg::rgba8> load;
    std::vector<Move> steps;
-   std::vector<Move> moves;
    std::vector<gobj*> digits;
    std::vector<std::pair<int,int> > errors;
    int stepIdx;
@@ -396,4 +412,5 @@ private:
    gSelect_bar select_bar;
    int selected_x;
    int selected_y;
+   int background;
 };

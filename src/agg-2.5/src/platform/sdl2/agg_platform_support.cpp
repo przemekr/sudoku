@@ -759,46 +759,12 @@ if(m_ctrls.on_mouse_button_down(m_specific->m_cur_x,
     const char* platform_support::img_ext() const { return ".bmp"; }
 
     //------------------------------------------------------------------------
-    const char* platform_support::full_file_name(const char* file_name)
+    const char* platform_support::get_storage_path()
     {
-        return file_name;
-    }
-
-    FILE* platform_support::open_rw_file(const char* org,
-          const char* app, const char* fname)
-    {
-       ERROR_PRINT("open_rw");
 #ifdef __ANDROID__
-       SDL_RWops* ops = SDL_RWFromFile(fname, "r+");
-       if (ops)
-       {
-          return ops->hidden.stdio.fp;
-       }
-       ops = SDL_RWFromFile(fname, "w+");
-       {
-          return ops->hidden.stdio.fp;
-       }
-       return NULL;
+       return SDL_AndroidGetInternalStoragePath();
 #else
-       char* path = SDL_GetPrefPath(org, app);
-       if (!path)
-       {
-          ERROR_PRINT("Couldn't get path: %s\n", SDL_GetError());
-          return NULL;
-       }
-       char filename[1024];
-       strcpy(filename, path);
-       strcat(filename, fname);
-       FILE* f = fopen(filename, "r+");
-       if (!f)
-       {
-          ERROR_PRINT("could not open file: %s\n", strerror(errno));
-          f = fopen(filename, "w+");
-          if (!f)
-             ERROR_PRINT("could not open file: %s\n", strerror(errno));
-       }
-       SDL_free(path);
-       return f;
+       return ".";
 #endif
     }
 

@@ -22,6 +22,7 @@
 #include <math.h>
 #include <algorithm> 
 #include <stack>
+#include <fstream>
 #include <unistd.h>
 #include <stdarg.h>
 #include "agg_basics.h"
@@ -89,6 +90,7 @@ typedef agg::line_image_pattern<agg::pattern_filter_bilinear_rgba8> pattern_type
 typedef agg::renderer_outline_image<renderer_base_type, pattern_type> renderer_type;
 typedef agg::rasterizer_outline_aa<renderer_type> rasterizer_type;
 
+const int MAX_SAVE_GAMES = 10;
 
 class View
 {
@@ -214,12 +216,15 @@ public:
       agg::renderer_base<pixfmt_type> img(pfb);
 
       typedef agg::span_interpolator_linear<agg::trans_affine> interpolator_type;
-      interpolator_type interpolator(shape_mtx);
       typedef agg::image_accessor_clone<pixfmt_type> img_accessor_type;
+      typedef agg::span_image_filter_rgba_2x2<img_accessor_type, interpolator_type> span_gen_type;
+      agg::image_filter_bilinear filter_kernel;
+      agg::image_filter_lut filter(filter_kernel, false);
+
+      interpolator_type interpolator(shape_mtx);
       pixfmt_type pixf_img(rbuf_img(idx));
       img_accessor_type ia(pixf_img);
-      typedef agg::span_image_filter_rgba_nn<img_accessor_type, interpolator_type> span_gen_type;
-      span_gen_type sg(ia, interpolator);
+      span_gen_type sg(ia, interpolator, filter);
       agg::span_allocator<color_type> sa;
       ras.move_to_d(0,0);
       ras.line_to_d(xsize,0);
@@ -229,6 +234,96 @@ public:
       agg::render_scanlines_aa(ras, sl, img, sa, sg);
    }
 
+   void save_game(Sudoku s, std::vector<Move> m)
+   {
+      std::vector<std::string> list = save_list();
+      if (list.size() > MAX_SAVE_GAMES)
+      {
+         save_remove(list[0]);
+      }
+      std::string name = new_save_game(s, m);
+      std::cout << "save_game: " << name  << std::endl;
+   }
+   
+   std::string read_file(FILE* f)
+   {
+      fseek(f, 0, SEEK_END);
+      long size = ftell(f);
+      fseek(f, 0, SEEK_SET);
+      char* buf = new char[size];
+      fread(buf, 1, size, f);
+      std::string s(buf);
+      delete[] buf;
+      return s;
+   }
+
+   void save_remove(std::string name)
+   {
+      std::cout << "remove: " << name << std::endl;
+      auto list = save_list();
+      std::ofstream file;
+      file.open((get_storage_path()+std::string("/save_list")).c_str());
+      for (auto i = list.begin(); i != list.end(); i++)
+      {
+         if (*i == name)
+         {
+            unlink((get_storage_path()+std::string("/")+*i).c_str());
+         } else {
+            std::cout << "save_remove: " << *i << std::endl;
+            file << *i << std::endl;
+         }
+      }
+      file.close();
+   }
+
+   void save_load(std::string name)
+   {
+      std::string line;
+      std::ifstream file;
+      file.open((get_storage_path()+std::string("/")+name).c_str());
+      std::getline(file, line, '@');
+      sudoku = Sudoku(line).str();
+      getline(file, line, '@');
+      moves = move_list(line);
+      file.close();
+   }
+
+   std::vector<std::string> save_list()
+   {
+      std::ifstream file;
+      file.open((get_storage_path()+std::string("/save_list")).c_str());
+      std::vector<std::string> list;
+      std::string line;
+      while (std::getline(file, line))
+      {
+         std::cout << "save_list: " << line << std::endl;
+         list.push_back(line);
+      }
+      file.close();
+      return list;
+   }
+
+   std::string new_save_game(Sudoku s, std::vector<Move> m)
+   {
+      time_t t = time(0);   // get time now
+      struct tm* now = localtime(&t);
+      std::stringstream ss;
+      ss << (now->tm_year + 1900) << '-' 
+         << (now->tm_mon + 1) << '-'
+         << now->tm_mday << '_'
+         << now->tm_hour << ':'
+         << now->tm_min <<  ':'
+         << now->tm_sec;
+      std::ofstream file;
+      file.open((get_storage_path()+std::string("/")+ss.str()).c_str());
+      file << s.str() << "@" << move_list_to_str(m);
+      file.close();
+
+      file.open((get_storage_path()+std::string("/save_list")).c_str(), std::ios_base::app);
+      file << ss.str() << std::endl;
+      file.close();
+      return ss.str();
+   }
 
    virtual void on_ctrl_change()
    {
@@ -253,6 +348,11 @@ public:
    virtual void on_mouse_button_down(int x, int y, unsigned flags)
    {
       view->on_mouse_button_down(x, y, flags);
+   }
+
+   virtual void on_key(int x, int y, unsigned key, unsigned flags)
+   {
+      view->on_key(x, y, key, flags);
    }
 
    virtual void on_mouse_move(int x, int y, unsigned flags)
@@ -288,6 +388,7 @@ public:
    }
    int  current_sound;
    Sudoku sudoku;
+   std::vector<Move> moves;
 protected:
    View* view;
    bool sound;
