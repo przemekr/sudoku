@@ -96,7 +96,8 @@ namespace agg
         m_texture(0),
         m_renderer(0),
         m_cur_x(0),
-        m_cur_y(0)
+        m_cur_y(0),
+        m_sw_start(0)
     {
         memset(m_surf_img, 0, sizeof(m_surf_img));
         memset(m_music, 0, sizeof(m_music));

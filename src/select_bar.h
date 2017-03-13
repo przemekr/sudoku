@@ -11,6 +11,7 @@ public:
          delete *it;
       }
       digits.resize(0);
+      selected = 0;
    }
 
    bool is_active()
@@ -47,8 +48,8 @@ public:
          return;
 
       digits[selected]->set(20, red);
-      selected = (x - init_x)/10% digits.size();
-      digits[selected]->set(23, green);
+      selected = (x - init_x)/15% digits.size();
+      digits[selected]->set(25, green);
    }
 
    void draw(agg::renderer_base<pixfmt_type> rbase)

@@ -76,6 +76,7 @@ const agg::rgba dblue(0,0,200,128);
 const agg::rgba lblue(0,0,0.9,1);
 const agg::rgba lgreen(0,0.9,0,1);
 const agg::rgba lgray(0.8,0.8,0.8,1);
+const agg::rgba dgray(0.6,0.6,0.6,1);
 const agg::rgba green(0,120,0);
 const agg::rgba yellow(63,63,0);
 const agg::rgba red(0.9,0,0,0.7);

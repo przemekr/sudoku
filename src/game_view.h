@@ -2,6 +2,7 @@
 #include "gobj.h"
 #include "digit.h"
 #include "select_bar.h"
+#include "message_bar.h"
 
 class GameView : public AppView
 {
@@ -15,7 +16,8 @@ public:
    undo(320, 20, 400, 45,   "Undo",  !flip_y),
    solveB(420, 20, 500, 45, "Solve", !flip_y),
    save(20,  60, 100, 85,   "Save",  !flip_y),
-   load(420, 60, 500, 85,   "Load",  !flip_y)
+   load(420, 60, 500, 85,   "Load",  !flip_y),
+   message(120, 100)
    {
       new_game.background_color(yellow);
       scan.background_color(yellow);
@@ -44,6 +46,7 @@ public:
       stepIdx = 0;
       app.wait_mode(false);
       update_errors();
+      update_initials();
    }
 
    void on_mouse_button_up(int x, int y, unsigned flags)
@@ -68,11 +71,13 @@ public:
          selected_x = pixToCol(x);
          selected_y = pixToRow(y);
          auto possible = app.sudoku.getPossible(selected_x, selected_y);
-         for (auto i = possible.begin(); i != possible.end(); i++)
+         if (inMoveList(selected_x, selected_y))
          {
-            std::cout << *i << std::endl;
+            Sudoku s = app.sudoku;
+            s.move(Move(0, selected_x, selected_y));
+            possible = s.getPossible(selected_x, selected_y);
          }
-         select_bar.set(x, y, app.sudoku.getPossible(selected_x, selected_y));
+         select_bar.set(x, y, possible);
       }
 
       if (m_ctrls.on_mouse_button_down(x, y))
@@ -144,6 +149,7 @@ public:
 
    void on_ctrl_change()
    {
+      app.wait_mode(false);
       if (new_game.status())
       {
          new_game.status(false);
@@ -178,6 +184,8 @@ public:
       if (not scan.status() && strcmp(scan.label(), "Done") == 0)
       {
          scan.label("Scan");
+         app.moves.clear();
+         update_initials();
       }
       if (hint.status())
       {
@@ -193,16 +201,17 @@ public:
             move(steps[0].x, steps[0].y, steps[0].value);
          } catch (const NoSolution& e)
          {
-            std::cout << "No Solution!" << std::endl;
+            message("No Solution!");
          } catch (const MoveLimit& e)
          {
-            std::cout << "No Solution (Move Limit)!" << std::endl;
+            message("Can not solve :'(");
          }
       }
       if (solveB.status())
       {
          if (errors.size())
          {
+            message("No Solution!");
             solveB.status(false);
             return;
          }
@@ -214,18 +223,18 @@ public:
          } catch (const NoSolution& e)
          {
             solveB.status(false);
-            std::cout << "No Solution!" << std::endl;
+            message("No Solution!");
          } catch (const MoveLimit& e)
          {
             solveB.status(false);
-            std::cout << "No Solution (Move Limit)!" << std::endl;
+            message("Can not solve :'(");
          }
       }
       if (save.status())
       {
          save.status(false);
          app.save_game(app.sudoku, app.moves);
-         app.changeView("game");
+         message("game saved");
       }
       if (load.status())
       {
@@ -256,6 +265,18 @@ public:
          rbase.blend_bar(tl_x, tl_y, br_x, br_y, white, 200);
       }
 
+      // errors
+      for (auto it = errors.begin(); it != errors.end(); it++)
+      {
+         rbase.blend_bar(colToPix(it->first), rowToPix(it->second), colToPix(it->first+1), rowToPix(it->second+1), red, 80);
+      }
+
+      // initials
+      for (auto it = initials.begin(); it != initials.end(); it++)
+      {
+         rbase.blend_bar(colToPix(it->first), rowToPix(it->second), colToPix(it->first+1), rowToPix(it->second+1), lgray, 100);
+      }
+
 
       // draw grid
       for (int i = 0; i < 10; i++)
@@ -269,17 +290,12 @@ public:
          rbase.blend_bar(vx, vy, vx+(i%3 == 0? 3:1), vy+9*ysize, black, (i%3 == 0? 255:128));
       }
 
-      // errors
-      for (auto it = errors.begin(); it != errors.end(); it++)
-      {
-         rbase.blend_bar(colToPix(it->first), rowToPix(it->second), colToPix(it->first+1), rowToPix(it->second+1), red, 80);
-      }
-
       for (auto it = digits.begin(); it != digits.end(); it++)
       {
          (*it)->draw(rbase);
       }
       select_bar.draw(rbase);
+      message.draw(rbase);
 
       agg::render_ctrl(ras, sl, rbase, new_game);
       agg::render_ctrl(ras, sl, rbase, scan);
@@ -334,11 +350,25 @@ private:
       move(m.x, m.y, 0, true);
    }
 
+   void remove_digit(int x, int y)
+   {
+      for (auto it = digits.begin(); it != digits.end(); it++)
+      {
+         if ((*it)->tl_x == colToPixI(x) and (*it)->tl_y == rowToPixI(y))
+         {
+            delete *it;
+            digits.erase(it);
+            break;
+         }
+      }
+   }
+
    void move(int x, int y, int value, bool removeOK = false)
    {
       Move m(value, x, y);
       if (value)
       {
+         remove_digit(x, y);
          digits.push_back(new gDigit(
                   colToPixI(x),
                   rowToPixI(y),
@@ -347,15 +377,7 @@ private:
          app.moves.push_back(m);
       } else if (removeOK)
       {
-         for (auto it = digits.begin(); it != digits.end(); it++)
-         {
-            if ((*it)->tl_x == colToPixI(x) and (*it)->tl_y == rowToPixI(y))
-            {
-               delete *it;
-               digits.erase(it);
-               break;
-            }
-         }
+         remove_digit(x, y);
          app.sudoku.move(Move(value, x, y));
       }
       update_errors();
@@ -370,6 +392,27 @@ private:
             if (app.sudoku.isEmpty(x,y) and app.sudoku.getPossible(x,y).size() == 0)
                errors.push_back(std::pair<int,int>(x,y));
          }
+   }
+
+   void update_initials()
+   {
+      initials.clear();
+      for (int y = 0; y < app.sudoku.getDim(); y++)
+         for (int x = 0; x < app.sudoku.getDim(); x++)
+         {
+            if (not app.sudoku.isEmpty(x,y) and not inMoveList(x,y))
+               initials.push_back(std::pair<int,int>(x,y));
+         }
+   }
+
+   bool inMoveList(int x, int y)
+   {
+      for(auto it = app.moves.begin(); it != app.moves.end(); it++)
+      {
+         if (it->x == x and it->y == y)
+            return true;
+      }
+      return false;
    }
 
    void update(long elapsed_time)
@@ -389,6 +432,7 @@ private:
          solveB.status(false);
       }
       select_bar.update(elapsed_time);
+      message.update(1.0*elapsed_time/1000);
    }
    agg::button_ctrl<agg::rgba8> new_game;
    agg::button_ctrl<agg::rgba8> scan;
@@ -400,6 +444,7 @@ private:
    std::vector<Move> steps;
    std::vector<gobj*> digits;
    std::vector<std::pair<int,int> > errors;
+   std::vector<std::pair<int,int> > initials;
    int stepIdx;
    int cnt;
    int bgc;
@@ -410,6 +455,7 @@ private:
    int br_x;
    int br_y;
    gSelect_bar select_bar;
+   gMsgBar message;
    int selected_x;
    int selected_y;
    int background;
